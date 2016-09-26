@@ -224,6 +224,8 @@ if __name__ == "__main__":
         out_path_pref = ""
     tm = temp_monitor(ctrl_path_pref, ctrl_fn, hwmon_path_pref, hwmon_fn, out_path_pref, out_fn)
     if tm.check_files():
+        # unconditionally turn the fan on to set the driver to a known state
+        tm.fan_ctrl("on")
         tm.monitor()
     else:
         sys.exit(1)

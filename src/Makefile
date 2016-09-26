@@ -2,14 +2,14 @@ PROGS      =
 PHPCLI     =
 CONFIGS    =
 
-SRCS = imgsrv.py
-OBJS =
+SRCS       = tempmon.py
+OBJS       =
 
 INSTALL    = install
 INSTMODE   = 0755
 INSTDOCS   = 0644
 
-OWN = -o root -g root
+OWN        = -o root -g root
 
 CFLAGS     =
 
