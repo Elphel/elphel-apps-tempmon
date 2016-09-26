@@ -27,6 +27,7 @@ import sys
 import time
 import subprocess
 import atexit
+import getopt
 from posix import EX_OSFILE, F_OK
 
 DEBUG = 0
@@ -59,10 +60,11 @@ out_fn = {"core_temp_fn": "core_temp",
 
 class temp_monitor():
     def __init__(self, ctrl_path_pref, ctrl_file_names, hwmon_path_pref, hwmon_fn,
-                 out_path_prefix, out_fnames):
+                 out_path_prefix, out_fnames, control_fan):
         self.is_fan_on = False
         self.is_vp5_enabled = False
         self.is_10389_present = True
+        self.control_fan = control_fan
         self.ctrl_path_prefix = ctrl_path_pref
         self.ctrl_fnames = ctrl_file_names
         self.hwmon_path_prefix = hwmon_path_pref
@@ -124,9 +126,12 @@ class temp_monitor():
     
     def fan_ctrl(self, ctrl):
         """
-        Control fan by writing to sysfs files.
+        Control fan (if this is allowed during script invocation) by writing to sysfs files.
         @param ctrl: can be "on" or "off" to turn fan on or off
         """
+        if self.control_fan is False:
+            return
+        
         if ctrl is "on":
             """ check if +5V is active and turn it on if it is not (it should not happen) """
             with open(self.ctrl_path_prefix + self.ctrl_fnames["vp5_en_fn"], "r+") as f:
@@ -217,15 +222,41 @@ class temp_monitor():
             self.core_temp_params_f.write(str(key) + ": " + str(val) + "\n")
         self.core_temp_params_f.flush()
 
+def print_help():
+    """
+    Print usage information.
+    """
+    print "tempmon.py [--control_fan on|off]"
+    print "'control_fan' parameter enables or disables camera fan control. Default value for this parameter is 'on'."
+
 if __name__ == "__main__":
     if DEBUG:
         ctrl_path_pref = ""
         hwmon_path_pref = ""
         out_path_pref = ""
-    tm = temp_monitor(ctrl_path_pref, ctrl_fn, hwmon_path_pref, hwmon_fn, out_path_pref, out_fn)
+    
+    # parse command line options
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "h", ["control_fan="])
+    except:
+        print_help()
+        sys.exit(2)
+    control_fan = True
+    for opt, arg in opts:
+        if opt == "-h":
+            print_help()
+            sys.exit(0)
+        elif opt == "--control_fan":
+            if arg == "on":
+                control_fan = True
+            else:
+                control_fan = False
+    
+    tm = temp_monitor(ctrl_path_pref, ctrl_fn, hwmon_path_pref, hwmon_fn, out_path_pref, out_fn, control_fan)
     if tm.check_files():
         # unconditionally turn the fan on to set the driver to a known state
-        tm.fan_ctrl("on")
+        if control_fan:
+            tm.fan_ctrl("on")
         tm.monitor()
     else:
         sys.exit(1)
