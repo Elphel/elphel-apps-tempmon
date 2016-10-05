@@ -188,7 +188,7 @@ class temp_monitor():
                     self.shutdown()
                 
                 self.core_temp_out_f.seek(0)
-                self.core_temp_out_f.write(str(core_temp))
+                self.core_temp_out_f.write(str(core_temp) + "\n")
                 self.core_temp_out_f.flush()
                 
 #                 print "Core temperature: '%f', median: '%f'" % (core_temp, avg)
